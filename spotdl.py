@@ -375,9 +375,9 @@ def grab_single(raw_song, number=None):
     if not check_exists(file_name, raw_song, islist=islist):
         if download_song(file_name, content):
             print('')
-            t = threading.Thread(target=finalize, args=(file_name, meta_tags))
-            #finalize(file_name, meta_tags)
-            t.start()
+            thread = threading.Thread(target=finalize, args=(file_name, meta_tags))
+            threads.append(thread)
+            thread.start()
         else:
             print('No audio streams available')
 
@@ -410,6 +410,7 @@ if __name__ == '__main__':
     args = misc.get_arguments()
 
     misc.filter_path(args.folder)
+    threads = []
 
     if args.song:
         grab_single(raw_song=args.song)
@@ -419,6 +420,9 @@ if __name__ == '__main__':
         grab_playlist(playlist=args.playlist)
     elif args.username:
         feed_playlist(username=args.username)
+
+    for thread in threads:
+        thread.join()
 else:
     misc.filter_path('Music')
     args = TestArgs()
