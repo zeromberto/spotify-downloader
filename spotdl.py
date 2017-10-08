@@ -13,6 +13,7 @@ import urllib.request
 import sys
 import os
 import time
+import threading
 
 
 def generate_songname(tags):
@@ -374,17 +375,23 @@ def grab_single(raw_song, number=None):
     if not check_exists(file_name, raw_song, islist=islist):
         if download_song(file_name, content):
             print('')
-            input_song = file_name + args.input_ext
-            output_song = file_name + args.output_ext
-            convert.song(input_song, output_song, args.folder,
-                         avconv=args.avconv, verbose=args.verbose)
-            if not args.input_ext == args.output_ext:
-                os.remove(os.path.join(args.folder, input_song))
-
-            if not args.no_metadata:
-                metadata.embed(os.path.join(args.folder, output_song), meta_tags)
+            t = threading.Thread(target=finalize, args=(file_name, meta_tags))
+            #finalize(file_name, meta_tags)
+            t.start()
         else:
             print('No audio streams available')
+
+
+def finalize(file_name, meta_tags):
+    input_song = file_name + args.input_ext
+    output_song = file_name + args.output_ext
+    convert.song(input_song, output_song, args.folder,
+                 avconv=args.avconv, verbose=args.verbose)
+    if not args.input_ext == args.output_ext:
+        os.remove(os.path.join(args.folder, input_song))
+
+    if not args.no_metadata:
+        metadata.embed(os.path.join(args.folder, output_song), meta_tags)
 
 
 class TestArgs(object):
