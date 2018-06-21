@@ -42,6 +42,7 @@ def check_exists(music_file, raw_song, meta_tags):
                     os.remove(os.path.join(const.args.folder, song))
                     return False
 
+            log.warning('"{}" already exists'.format(song))
             log.info('Skipping "{}"'.format(song))
             return True
 

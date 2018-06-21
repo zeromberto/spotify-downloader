@@ -1,3 +1,5 @@
+import os
+
 import spotipy
 import spotipy.oauth2 as oauth2
 import lyricwikia
@@ -135,7 +137,8 @@ def fetch_playlist(playlist):
 
 def write_playlist(playlist_url, text_file=None):
     playlist = fetch_playlist(playlist_url)
-    if playlist['name'].endswith('_d'):
+    postfix = os.getenv('POSTFIX', '_d')
+    if playlist['name'].endswith(postfix):
         tracks = playlist['tracks']
         if not text_file:
             text_file = u'{0}.txt'.format(slugify(playlist['name'], ok='-_()[]{}'))

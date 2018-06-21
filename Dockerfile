@@ -6,10 +6,8 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /usr/src/app
-
-COPY spotify-downloader/ ./
+COPY . .
 RUN pip install -U --no-cache-dir -r requirements.txt
 
-COPY . .
-
-CMD ["python", "spotdl.py", "-uze.romberto"]
+ENTRYPOINT ["/bin/bash"]
+CMD ["./run.sh"]
