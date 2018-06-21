@@ -1,16 +1,15 @@
-FROM python:3.6-alpine
+FROM python:3
 
-RUN apk add --no-cache \
-    ffmpeg
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        ffmpeg \
+    && rm -rf /var/lib/apt/lists/*
 
-ADD requirements.txt /spotify-downloader/
-RUN pip install -r /spotify-downloader/requirements.txt
-RUN rm /spotify-downloader/requirements.txt
+WORKDIR /usr/src/app
 
-ADD spotdl.py /spotify-downloader/
-ADD core/ /spotify-downloader/core
+COPY spotify-downloader/ ./
+RUN pip install -U --no-cache-dir -r requirements.txt
 
-RUN mkdir /music
-WORKDIR /music
+COPY . .
 
-ENTRYPOINT ["python3", "/spotify-downloader/spotdl.py", "-f", "/music"]
+CMD ["python", "spotdl.py", "-uze.romberto"]

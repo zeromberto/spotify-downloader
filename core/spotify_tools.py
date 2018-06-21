@@ -81,8 +81,10 @@ def generate_metadata(raw_song):
 
 def write_user_playlist(username, text_file=None):
     links = get_playlists(username=username)
-    playlist = internals.input_link(links)
-    return write_playlist(playlist, text_file)
+    # playlist = internals.input_link(links)
+    for playlist in links:
+        write_playlist(playlist, None)
+    # return write_playlist(playlist, text_file)
 
 
 def get_playlists(username):
@@ -133,10 +135,12 @@ def fetch_playlist(playlist):
 
 def write_playlist(playlist_url, text_file=None):
     playlist = fetch_playlist(playlist_url)
-    tracks = playlist['tracks']
-    if not text_file:
-        text_file = u'{0}.txt'.format(slugify(playlist['name'], ok='-_()[]{}'))
-    return write_tracks(tracks, text_file)
+    if playlist['name'].endswith('_d'):
+        tracks = playlist['tracks']
+        if not text_file:
+            text_file = u'{0}.txt'.format(slugify(playlist['name'], ok='-_()[]{}'))
+        return write_tracks(tracks, text_file)
+    return None
 
 
 def fetch_album(album):

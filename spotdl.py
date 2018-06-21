@@ -42,23 +42,26 @@ def check_exists(music_file, raw_song, meta_tags):
                     os.remove(os.path.join(const.args.folder, song))
                     return False
 
-            log.warning('"{}" already exists'.format(song))
-            if const.args.overwrite == 'prompt':
-                log.info('"{}" has already been downloaded. '
-                         'Re-download? (y/N): '.format(song))
-                prompt = input('> ')
-                if prompt.lower() == 'y':
-                    os.remove(os.path.join(const.args.folder, song))
-                    return False
-                else:
-                    return True
-            elif const.args.overwrite == 'force':
-                os.remove(os.path.join(const.args.folder, song))
-                log.info('Overwriting "{}"'.format(song))
-                return False
-            elif const.args.overwrite == 'skip':
-                log.info('Skipping "{}"'.format(song))
-                return True
+            log.info('Skipping "{}"'.format(song))
+            return True
+
+            # log.warning('"{}" already exists'.format(song))
+            # if const.args.overwrite == 'prompt':
+            #     log.info('"{}" has already been downloaded. '
+            #              'Re-download? (y/N): '.format(song))
+            #     prompt = input('> ')
+            #     if prompt.lower() == 'y':
+            #         os.remove(os.path.join(const.args.folder, song))
+            #         return False
+            #     else:
+            #         return True
+            # elif const.args.overwrite == 'force':
+            #     os.remove(os.path.join(const.args.folder, song))
+            #     log.info('Overwriting "{}"'.format(song))
+            #     return False
+            # elif const.args.overwrite == 'skip':
+            #     log.info('Skipping "{}"'.format(song))
+            #     return True
     return False
 
 
