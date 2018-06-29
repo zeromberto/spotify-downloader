@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+{% load staticfiles %}
+<html>
+<head>
+    <title>Foo</title>
+</head>
+<body>
+<script type="text/javascript" src="{% static 'libs/spotify_sdk-1.6.0/spotify-player.js' %}"></script>
+<button id="play" onclick="foo()">foo</button>
+<input type="text" id="uri">
+
+
+<script>
+    var player;
+    var player_state;
+    var ready = false;
+    const token = '{{ token }}';
+    window.onSpotifyWebPlaybackSDKReady = () => {
+
+        var urlParams = new URLSearchParams(window.location.hash.substr(1));
+        var token = urlParams.get('access_token');
+
+        player = new Spotify.Player({
+            name: 'foo',
+            getOAuthToken: cb => { cb(token); }
+        });
+
+        // Error handling
+        player.addListener('initialization_error', ({ message }) => { console.error(message); });
+        player.addListener('authentication_error', ({ message }) => { console.error(message); });
+        player.addListener('account_error', ({ message }) => { console.error(message); });
+        player.addListener('playback_error', ({ message }) => { console.error(message); });
+
+        // Playback status updates
+        player.addListener('player_state_changed', state => {
+            player_state = state;
+            console.log(state);
+        });
+
+        // Ready
+        player.addListener('ready', ({ device_id }) => {
+            ready = true;
+            console.log('Ready with Device ID', device_id);
+        });
+
+        // Not Ready
+        player.addListener('not_ready', ({ device_id }) => {
+            ready = false;
+            console.log('Device ID has gone offline', device_id);
+        });
+
+        // Connect to the player!
+        player.connect();
+
+    };
+    const play = ({
+                      spotify_uri,
+                      playerInstance: {
+                          _options: {
+                              getOAuthToken,
+                              id
+                          }
+                      }
+                  }) => {
+        getOAuthToken(access_token => {
+            fetch(`https://api.spotify.com/v1/me/player/play?device_id=${id}`, {
+                method: 'PUT',
+                body: JSON.stringify({ uris: [spotify_uri] }),
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${access_token}`
+                },
+            });
+        });
+    };
+
+
+    function foo() {
+        console.log("foo");
+        play({
+            playerInstance: player,
+            spotify_uri: document.getElementById("uri").value,
+        });
+    }
+
+
+</script>
+</body>
+</html>
