@@ -2,6 +2,7 @@ import fileinput
 import os
 import re
 import subprocess
+from pathlib import Path
 
 from django.urls import reverse
 from selenium import webdriver
@@ -14,7 +15,7 @@ import spotipy.oauth2 as oauth2
 import pyaudio
 import wave
 
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "spotify_downloader.settings")
+# os.environ.setdefault("DJANGO_SETTINGS_MODULE", "spotify_downloader.settings")
 uri = 'spotify:track:5egCSjWOXvbIcEeVSFEBc9'
 
 
@@ -38,12 +39,12 @@ def is_paused(driver):
     return False
 
 
-def play_and_record():
+def play_and_record(track_uri):
 
     options = Options()
     # Disable proxy
     # options.set_preference('network.proxy.type', 0)
-    # options.add_argument('--headless')
+    options.add_argument('--headless')
     PROXY = "127.0.0.1:3128"
     proxy = Proxy({
         "httpProxy": PROXY,
@@ -53,38 +54,39 @@ def play_and_record():
         "proxyType": ProxyType.MANUAL,
     })
     login_state = False
-    # driver = webdriver.Firefox(firefox_options=options, proxy=proxy, firefox_profile="./my.default")
+    driver = webdriver.Firefox(firefox_options=options, proxy=proxy, firefox_profile="./my.default")
     # driver.set_window_size(1855, 1103)
-    # driver.implicitly_wait(10)
+    driver.implicitly_wait(10)
     try:
-        # if not login_state:
-        #     driver.get('%s%s' % ('http://localhost:8000', reverse('spotify_downloader_app:login')))
-        # WebDriverWait(driver, 30).until(lambda driver: driver.execute_script('return document.readyState').__eq__('complete'))
-        # WebDriverWait(driver, 30).until(lambda driver: driver.execute_script('return ready'))
-        # print(driver.execute_script('return document.readyState'))
-        # print(driver.execute_script('return ready'))
-        # driver.find_element_by_id('uri').send_keys(uri)
-        # driver.find_element_by_id('play').click()
-        #
-        # WebDriverWait(driver, 30).until(lambda driver: is_playing(driver))
+        if not login_state:
+            driver.get('%s%s' % ('http://localhost:8000', reverse('spotify_downloader_app:login')))
+        WebDriverWait(driver, 30).until(lambda driver: driver.execute_script('return document.readyState').__eq__('complete'))
+        WebDriverWait(driver, 30).until(lambda driver: driver.execute_script('return ready'))
+        print(driver.execute_script('return document.readyState'))
+        print(driver.execute_script('return ready'))
+        driver.find_element_by_id('uri').send_keys(uri)
+        driver.find_element_by_id('play').click()
+
+        WebDriverWait(driver, 30).until(lambda driver: is_playing(driver))
     #record
 
         print('playing')
         # record_process = subprocess.Popen(['arecord', '-L'])
         # record_process.communicate()
-        record_process = subprocess.Popen(['./bash/record.sh', '/data/test'])
+        # record_process = subprocess.Popen(['./bash/record.sh', '/data/test'])
         # transform_process = subprocess.Popen(['lame', '-x', '-',  'out.mp3'], stdin=record_process.stdout, stdout=subprocess.PIPE)
+        while not Path('/stop').is_file():
+            time.sleep(2)
         print('started recording')
-        # WebDriverWait(driver, 360).until(lambda driver: is_paused(driver))
+        WebDriverWait(driver, 360).until(lambda driver: is_paused(driver))
         print('finished')
     except TimeoutError as e:
         print(e)
     except Exception as e:
         print(e)
-    else:
+    finally:
         print('Killing all processes')
         # transform_process.terminate()
-        record_process.terminate()
-        # driver.quit()
+        # record_process.terminate()
+        driver.quit()
 
-play_and_record()
