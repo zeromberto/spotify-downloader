@@ -19,17 +19,18 @@ RUN apt-get update \
         libmysqlclient-dev \
     && rm -rf /var/lib/apt/lists/*
 
-
 RUN useradd --create-home --home-dir /home/pulseaudio pulseaudio \
 	&& usermod -aG audio,pulse,pulse-access pulseaudio \
-&& chown -R pulseaudio:pulseaudio /home/pulseaudio
-USER pulseaudio
-RUN pulseaudio -D --exit-idle-time=-1 # Start the pulseaudio server
+	&& chown -R pulseaudio:pulseaudio /home/pulseaudio
+
+COPY client.conf /etc/pulse/client.conf
+COPY daemon.conf /etc/pulse/daemon.conf
+#USER pulseaudio
+#RUN pulseaudio -D --exit-idle-time=-1 # Start the pulseaudio server
 #    pacmd load-module module-virtual-sink sink_name=v1 # Load the virtual sink and set it as default \
 #    pacmd set-default-sink v1 \
 #    pacmd set-default-source v1.monitor # set the monitor of v1 sink to be the default source
-USER root
-
+#USER root
 
 # Clean nginx configs
 RUN rm -rf /etc/nginx/sites-available/* && rm -rf /etc/nginx/sites-enabled/*
@@ -62,4 +63,7 @@ COPY ./site.conf /etc/nginx/sites-enabled/
 ENV APP_NAME=spotify_downloader
 COPY ./spotify_downloader ./spotify_downloader
 COPY ./spotify_downloader_app ./spotify_downloader_app
+COPY ./core ./core
+COPY ./bash ./bash
+COPY ./spotdl.py ./spotdl.py
 
