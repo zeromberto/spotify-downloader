@@ -1,21 +1,12 @@
-import fileinput
 import os
-import re
 import subprocess
-from pathlib import Path
 
 from django.urls import reverse
 from selenium import webdriver
-from selenium.webdriver import DesiredCapabilities, Proxy
-from selenium.webdriver.common.proxy import ProxyType
 from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.support.wait import WebDriverWait
-import spotipy
-import spotipy.oauth2 as oauth2
-import pyaudio
-import wave
 
-# os.environ.setdefault("DJANGO_SETTINGS_MODULE", "spotify_downloader.settings")
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 uri = 'spotify:track:5egCSjWOXvbIcEeVSFEBc9'
 
 
@@ -39,22 +30,15 @@ def is_paused(driver):
     return False
 
 
-def play_and_record(track_uri):
+def play_and_record(track_uri, track_name):
 
     options = Options()
     # Disable proxy
     # options.set_preference('network.proxy.type', 0)
     options.add_argument('--headless')
-    PROXY = "127.0.0.1:3128"
-    proxy = Proxy({
-        "httpProxy": PROXY,
-        "ftpProxy": PROXY,
-        "sslProxy": PROXY,
-        "noProxy": '',
-        "proxyType": ProxyType.MANUAL,
-    })
+
     login_state = False
-    driver = webdriver.Firefox(firefox_options=options, proxy=proxy, firefox_profile="./my.default")
+    driver = webdriver.Firefox(firefox_options=options, firefox_profile=BASE_DIR + '/my.default')
     # driver.set_window_size(1855, 1103)
     driver.implicitly_wait(10)
     try:
@@ -71,12 +55,12 @@ def play_and_record(track_uri):
     #record
 
         print('playing')
-        # record_process = subprocess.Popen(['arecord', '-L'])
+        record_process = subprocess.Popen(['ffmpeg', '-f', 'pulse', '-i', 'default', '/data/' + track_name + '.mp3'])
         # record_process.communicate()
         # record_process = subprocess.Popen(['./bash/record.sh', '/data/test'])
         # transform_process = subprocess.Popen(['lame', '-x', '-',  'out.mp3'], stdin=record_process.stdout, stdout=subprocess.PIPE)
-        while not Path('/stop').is_file():
-            time.sleep(2)
+        # while not Path('/stop').is_file():
+        #     time.sleep(2)
         print('started recording')
         WebDriverWait(driver, 360).until(lambda driver: is_paused(driver))
         print('finished')
@@ -90,3 +74,5 @@ def play_and_record(track_uri):
         # record_process.terminate()
         driver.quit()
 
+
+# play_and_record('', 'foo')

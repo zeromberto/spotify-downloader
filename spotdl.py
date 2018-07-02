@@ -120,7 +120,7 @@ def download_single(raw_song, number=None):
         meta_tags = spotify_tools.generate_metadata(raw_song)
     else:
         meta_tags = spotify_tools.generate_metadata(raw_song)
-        record.play_and_record(meta_tags['uri'])
+        record.play_and_record(meta_tags['uri'], 'foo')
         # content = youtube_tools.go_pafy(raw_song, meta_tags)
 
     # if content is None:
