@@ -88,8 +88,8 @@ def download_list(text_file):
         except spotipy.client.SpotifyException:
             # refresh token when it expires
             log.debug('Token expired, generating new one and authorizing')
-            spotify_tools.token = spotify_tools.generate_token()
-            spotify_tools.spotify = spotipy.Spotify(auth=spotify_tools.token)
+            new_token = spotify_tools.generate_token()
+            spotify_tools.spotify = spotipy.Spotify(auth=new_token)
             download_single(raw_song, number=number)
         # detect network problems
         except (urllib.request.URLError, TypeError, IOError):
@@ -120,61 +120,49 @@ def download_single(raw_song, number=None):
         meta_tags = spotify_tools.generate_metadata(raw_song)
     else:
         meta_tags = spotify_tools.generate_metadata(raw_song)
-        record.play_and_record(meta_tags['uri'], 'foo')
+
         # content = youtube_tools.go_pafy(raw_song, meta_tags)
 
     # if content is None:
     #     log.debug('Found no matching video')
     #     return
     #
-    # if const.args.download_only_metadata and meta_tags is None:
-    #     log.info('Found no metadata. Skipping the download')
-    #     return
-    #
-    # # "[number]. [artist] - [song]" if downloading from list
-    # # otherwise "[artist] - [song]"
+    if const.args.download_only_metadata and meta_tags is None:
+        log.info('Found no metadata. Skipping the download')
+        return
+
+    # "[number]. [artist] - [song]" if downloading from list
+    # otherwise "[artist] - [song]"
     # youtube_title = youtube_tools.get_youtube_title(content, number)
     # log.info('{} ({})'.format(youtube_title, content.watchv_url))
     #
-    # # generate file name of the song to download
-    # songname = content.title
-    #
-    # if meta_tags is not None:
-    #     refined_songname = internals.format_string(const.args.file_format,
-    #                                                meta_tags,
-    #                                                slugification=True)
-    #     log.debug('Refining songname from "{0}" to "{1}"'.format(songname, refined_songname))
-    #     if not refined_songname == ' - ':
-    #         songname = refined_songname
-    # else:
-    #     log.warning('Could not find metadata')
-    #     songname = internals.sanitize_title(songname)
-    #
-    # if const.args.dry_run:
-    #     return
-    #
-    # if not check_exists(songname, raw_song, meta_tags):
-    #     # deal with file formats containing slashes to non-existent directories
-    #     songpath = os.path.join(const.args.folder, os.path.dirname(songname))
-    #     os.makedirs(songpath, exist_ok=True)
-    #     input_song = songname + const.args.input_ext
-    #     output_song = songname + const.args.output_ext
-    #     if youtube_tools.download_song(input_song, content):
-    #         print('')
-    #         try:
-    #             convert.song(input_song, output_song, const.args.folder,
-    #                          avconv=const.args.avconv)
-    #         except FileNotFoundError:
-    #             encoder = 'avconv' if const.args.avconv else 'ffmpeg'
-    #             log.warning('Could not find {0}, skipping conversion'.format(encoder))
-    #             const.args.output_ext = const.args.input_ext
-    #             output_song = songname + const.args.output_ext
-    #
-    #         if not const.args.input_ext == const.args.output_ext:
-    #             os.remove(os.path.join(const.args.folder, input_song))
-    #         if not const.args.no_metadata and meta_tags is not None:
-    #             metadata.embed(os.path.join(const.args.folder, output_song), meta_tags)
-    #         return True
+    # generate file name of the song to download
+    songname = 'foo'
+
+    if meta_tags is not None:
+        refined_songname = internals.format_string(const.args.file_format,
+                                                   meta_tags,
+                                                   slugification=True)
+        log.debug('Refining songname from "{0}" to "{1}"'.format(songname, refined_songname))
+        if not refined_songname == ' - ':
+            songname = refined_songname
+    else:
+        log.warning('Could not find metadata')
+        songname = internals.sanitize_title(songname)
+
+    if const.args.dry_run:
+        return
+
+    if not check_exists(songname, raw_song, meta_tags):
+        # deal with file formats containing slashes to non-existent directories
+        songpath = os.path.join(const.args.folder, os.path.dirname(songname))
+        os.makedirs(songpath, exist_ok=True)
+        file_name = os.path.join(const.args.folder, songname + const.args.output_ext)
+        record.play_and_record(meta_tags['uri'], file_name, songname)
+
+        if not const.args.no_metadata and meta_tags is not None:
+            metadata.embed(file_name, meta_tags)
+        return True
 
 
 def main():

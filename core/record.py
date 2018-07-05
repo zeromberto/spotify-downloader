@@ -6,8 +6,9 @@ from selenium import webdriver
 from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.support.wait import WebDriverWait
 
+from core.const import log
+
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-uri = 'spotify:track:5egCSjWOXvbIcEeVSFEBc9'
 
 
 def is_playing(driver):
@@ -30,49 +31,39 @@ def is_paused(driver):
     return False
 
 
-def play_and_record(track_uri, track_name):
-
+def play_and_record(track_uri, file_name, track_name):
     options = Options()
-    # Disable proxy
-    # options.set_preference('network.proxy.type', 0)
     options.add_argument('--headless')
-
-    login_state = False
+    log.debug('Firefox starting')
     driver = webdriver.Firefox(firefox_options=options, firefox_profile=BASE_DIR + '/my.default')
-    # driver.set_window_size(1855, 1103)
+    log.debug('Firefox ready')
     driver.implicitly_wait(10)
     try:
-        if not login_state:
-            driver.get('%s%s' % ('http://localhost:8000', reverse('spotify_downloader_app:login')))
+        driver.get('%s%s' % ('http://localhost:8000', reverse('spotify_downloader_app:login')))
         WebDriverWait(driver, 30).until(lambda driver: driver.execute_script('return document.readyState').__eq__('complete'))
         WebDriverWait(driver, 30).until(lambda driver: driver.execute_script('return ready'))
-        print(driver.execute_script('return document.readyState'))
-        print(driver.execute_script('return ready'))
-        driver.find_element_by_id('uri').send_keys(uri)
+        log.debug(driver.execute_script('return document.readyState'))
+        log.debug(driver.execute_script('return ready'))
+        driver.find_element_by_id('uri').send_keys(track_uri)
         driver.find_element_by_id('play').click()
 
         WebDriverWait(driver, 30).until(lambda driver: is_playing(driver))
-    #record
+        log.debug('playing')
 
-        print('playing')
-        record_process = subprocess.Popen(['ffmpeg', '-f', 'pulse', '-i', 'default', '/data/' + track_name + '.mp3'])
-        # record_process.communicate()
-        # record_process = subprocess.Popen(['./bash/record.sh', '/data/test'])
-        # transform_process = subprocess.Popen(['lame', '-x', '-',  'out.mp3'], stdin=record_process.stdout, stdout=subprocess.PIPE)
-        # while not Path('/stop').is_file():
-        #     time.sleep(2)
-        print('started recording')
+        log.info('Recording {} to {}'.format(track_name, file_name))
+        FNULL = open(os.devnull, 'w')
+        record_process = subprocess.Popen(
+            ['ffmpeg', '-f', 'pulse', '-i', 'default', '-b:a', '320k', '-f', 'mp3', file_name],
+            stdout=FNULL, stderr=subprocess.STDOUT)
+        log.debug('started recording')
         WebDriverWait(driver, 360).until(lambda driver: is_paused(driver))
-        print('finished')
+        log.debug('finished')
+        record_process.terminate()
+        log.info('Finished recording of {}'.format(track_name))
     except TimeoutError as e:
-        print(e)
+        log.error(e)
     except Exception as e:
-        print(e)
+        log.error(e)
     finally:
-        print('Killing all processes')
-        # transform_process.terminate()
-        # record_process.terminate()
+        log.debug('Quitting firefox')
         driver.quit()
-
-
-# play_and_record('', 'foo')

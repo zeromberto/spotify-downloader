@@ -77,8 +77,8 @@ COPY ./site.conf /etc/nginx/sites-enabled/
 ENV APP_NAME=spotify_downloader
 COPY ./spotify_downloader ./spotify_downloader
 COPY ./spotify_downloader_app ./spotify_downloader_app
-COPY ./core ./core
-COPY ./bash ./bash
-COPY ./spotdl.py ./spotdl.py
 COPY ./my.default ./my.default
-
+COPY ./bash ./bash
+COPY ./core ./core
+COPY ./spotdl.py ./spotdl.py
+COPY ./run.sh ./run.sh
