@@ -10,5 +10,9 @@ for i in ${FILEENDING}; do
     folder=${i%_*}
     mkdir -p "/data/$folder"
     python3.6 spotdl.py --list="$i" -f "/data/$folder"
+
+    if [ -f "$i" ]; then
+        rm "$i"
+    fi
 done
 chmod -R 777 /data/*
