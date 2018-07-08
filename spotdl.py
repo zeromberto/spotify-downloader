@@ -1,21 +1,23 @@
 #!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
-from core import const
-from core import handle
-from core import metadata
-from core import convert
-from core import internals
-from core import spotify_tools
-from core import youtube_tools
-from core import record
-from slugify import slugify
-import spotipy
-import urllib.request
 import os
-import sys
-import time
 import platform
 import pprint
+import sys
+import time
+import urllib.request
+from random import shuffle
+
+import spotipy
+from slugify import slugify
+
+from core import const
+from core import handle
+from core import internals
+from core import metadata
+from core import record
+from core import spotify_tools
+from core import youtube_tools
 
 __version__ = '0.9.3'
 
@@ -77,10 +79,15 @@ def download_list(text_file):
     except ValueError:
         pass
 
+    lines = shuffle(lines)
     log.info(u'Preparing to download {} songs'.format(len(lines)))
     downloaded_songs = []
+    timeout = time.time() + 45 * 60
 
     for number, raw_song in enumerate(lines, 1):
+        if time.time() > timeout:
+            break
+
         print('')
         try:
             download_single(raw_song, number=number)
