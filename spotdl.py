@@ -159,7 +159,9 @@ def download_single(raw_song, number=None):
         os.makedirs(songpath, exist_ok=True)
         file_name = os.path.join(const.args.folder, songname + const.args.output_ext)
         record.play_and_record(meta_tags['uri'], file_name, songname)
-
+        if not record.verify_length(file_name, meta_tags['duration']):
+            log.error('Duration mismatch! Not tagging: {}'.format(songname))
+            return True
         if not const.args.no_metadata and meta_tags is not None:
             metadata.embed(file_name, meta_tags)
         return True
