@@ -86,6 +86,7 @@ def download_list(text_file):
 
     for number, raw_song in enumerate(lines, 1):
         if time.time() > timeout:
+            log.info('Timeout! Stopping download of playlist.')
             break
 
         print('')
