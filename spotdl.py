@@ -79,7 +79,7 @@ def download_list(text_file):
     except ValueError:
         pass
 
-    lines = shuffle(lines)
+    shuffle(lines)
     log.info(u'Preparing to download {} songs'.format(len(lines)))
     downloaded_songs = []
     timeout = time.time() + 45 * 60
