@@ -86,10 +86,9 @@ def download_list(text_file):
 
     for number, raw_song in enumerate(lines, 1):
         if time.time() > timeout:
-            log.info('Timeout! Stopping download of playlist.')
+            log.info('Playlist timeout! Stopping download of playlist.')
             break
 
-        print('')
         try:
             download_single(raw_song, number=number)
         # token expires after 1 hour
@@ -168,8 +167,9 @@ def download_single(raw_song, number=None):
         file_name = os.path.join(const.args.folder, songname + const.args.output_ext)
         record.play_and_record(meta_tags['uri'], file_name, songname)
         if not record.verify_length(file_name, meta_tags['duration']):
-            log.error('Duration mismatch! Not tagging: {}'.format(songname))
-            return True
+            log.error('Duration mismatch! Deleting: {}'.format(songname))
+            os.remove(file_name)
+            return False
         if not const.args.no_metadata and meta_tags is not None:
             metadata.embed(file_name, meta_tags)
         return True
