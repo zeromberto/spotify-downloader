@@ -15,31 +15,6 @@ from core.const import log
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
-def verify_length(file_name, duration, tolerance=3.0):
-    ffmpeg_get_mediafile_length = [
-        'sh', '-c', 'ffmpeg -i "$1" 2>&1 | grep Duration',
-        '_', file_name
-    ]
-    try:
-        output = subprocess.Popen(ffmpeg_get_mediafile_length,
-                                  stdout=subprocess.PIPE
-                                  ).stdout.read()
-        real_duration = re.findall(r'(?<=Duration: )(.*?)(?=,)', str(output))[0]
-        real_duration = time.strptime(real_duration.split('.')[0], '%H:%M:%S')
-        real_duration_sec = datetime.timedelta(hours=real_duration.tm_hour,
-                                               minutes=real_duration.tm_min,
-                                               seconds=real_duration.tm_sec).total_seconds()
-        log.debug('Recorded {} secs and track is set to {} secs at spotify'.format(real_duration_sec, duration))
-    except Exception as e:
-        log.error(str(e))
-        return False
-
-    if not isclose(real_duration_sec, duration, abs_tol=tolerance):
-        log.error('Recorded {} secs and track is set to {} secs at spotify'.format(real_duration_sec, duration))
-        return False
-    return True
-
-
 def play_and_record(track_uri, file_name, track_name):
     options = Options()
     options.add_argument('--headless')
@@ -61,9 +36,9 @@ def play_and_record(track_uri, file_name, track_name):
 
         record(driver, file_name, track_name)
     except TimeoutError as e:
-        log.error(e)
+        log.error(repr(e))
     except Exception as e:
-        log.error(e)
+        log.error(repr(e))
     finally:
         log.debug('Quitting firefox')
         driver.quit()
@@ -97,12 +72,34 @@ def record(driver, file_name, track_name):
             ['ffmpeg', '-f', 'pulse', '-i', 'default', '-b:a', '320k', '-f', 'mp3', file_name],
             stdout=FNULL, stderr=subprocess.STDOUT)
         log.debug('started recording')
-        WebDriverWait(driver, 360).until(lambda driver: is_paused(driver))
+        WebDriverWait(driver, 900).until(lambda driver: is_paused(driver))
         log.debug('finished')
         record_process.terminate()
     except Exception as e:
-        log.error(e)
+        log.error(repr(e))
     finally:
         if record_process:
             record_process.kill()
     log.info('Finished recording of {}'.format(track_name))
+
+
+def verify_length(file_name, duration, tolerance=3.0):
+    ffmpeg_get_mediafile_length = [
+        'sh', '-c', 'ffmpeg -i "$1" 2>&1 | grep Duration',
+        '_', file_name]
+    try:
+        output = subprocess.Popen(ffmpeg_get_mediafile_length, stdout=subprocess.PIPE).stdout.read()
+        real_duration = re.findall(r'(?<=Duration: )(.*?)(?=,)', str(output))[0]
+        real_duration = time.strptime(real_duration.split('.')[0], '%H:%M:%S')
+        real_duration_sec = datetime.timedelta(hours=real_duration.tm_hour,
+                                               minutes=real_duration.tm_min,
+                                               seconds=real_duration.tm_sec).total_seconds()
+        log.debug('Recorded {} secs and track is set to {} secs at spotify'.format(real_duration_sec, duration))
+    except Exception as e:
+        log.error(repr(e))
+        return False
+
+    if not isclose(real_duration_sec, duration, abs_tol=tolerance):
+        log.error('Recorded {} secs and track is set to {} secs at spotify'.format(real_duration_sec, duration))
+        return False
+    return True
