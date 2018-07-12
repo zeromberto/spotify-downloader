@@ -45,7 +45,7 @@ def check_exists(music_file, raw_song, meta_tags):
                     os.remove(os.path.join(const.args.folder, song))
                     return False
 
-            log.warning('"{}" already exists'.format(song))
+            # log.warning('"{}" already exists'.format(song))
             log.info('Skipping "{}"'.format(song))
             return True
 
@@ -80,13 +80,13 @@ def download_list(text_file):
         pass
 
     shuffle(lines)
-    log.info(u'Preparing to download {} songs'.format(len(lines)))
+    log.info(u'\n\nPreparing to download {} songs from {}\n'.format(len(lines), str(text_file).rsplit('/')[-1]))
     downloaded_songs = []
     timeout = time.time() + 45 * 60
 
     for number, raw_song in enumerate(lines, 1):
         if time.time() > timeout:
-            log.info('Playlist timeout! Stopping download of playlist.')
+            log.info('Playlist timeout! Stopping download of playlist.\n')
             break
 
         try:
@@ -158,6 +158,7 @@ def download_single(raw_song, number=None):
         songname = internals.sanitize_title(songname)
 
     if const.args.dry_run:
+        log.info(songname)
         return
 
     if not check_exists(songname, raw_song, meta_tags):

@@ -30,7 +30,7 @@ def embed(music_file, meta_tags):
         log.info('Applying metadata')
         return embed.as_m4a()
     elif music_file.endswith('.mp3'):
-        log.info('Applying metadata')
+        # log.info('Applying metadata')
         return embed.as_mp3()
     elif music_file.endswith('.flac'):
         log.info('Applying metadata')
