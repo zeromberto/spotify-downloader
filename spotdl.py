@@ -80,14 +80,14 @@ def download_list(text_file):
         pass
 
     shuffle(lines)
-    log.info(u'\n\nPreparing to download {} songs from {}\n'.format(len(lines), str(text_file).rsplit('/')[-1]))
+    log.info('Preparing to download {} songs from {}\n'.format(len(lines), str(text_file).rsplit('/')[-1]))
     downloaded_songs = []
     timeout = time.time() + 45 * 60
 
     for number, raw_song in enumerate(lines, 1):
         if time.time() > timeout:
             log.info('Playlist timeout! Stopping download of playlist.\n')
-            break
+            return downloaded_songs
 
         try:
             download_single(raw_song, number=number)
@@ -115,6 +115,7 @@ def download_list(text_file):
         log.debug('Removing downloaded song from text file')
         internals.trim_song(text_file)
 
+    log.info('Finished downloading {} songs from {}\n'.format(len(downloaded_songs), str(text_file).rsplit('/')[-1]))
     return downloaded_songs
 
 
