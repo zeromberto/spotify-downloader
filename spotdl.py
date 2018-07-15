@@ -99,13 +99,14 @@ def download_list(text_file):
             spotify_tools.spotify = spotipy.Spotify(auth=new_token)
             download_single(raw_song, number=number)
         # detect network problems
-        except (urllib.request.URLError, TypeError, IOError):
+        except (urllib.request.URLError, TypeError, IOError) as e:
             lines.append(raw_song)
             # remove the downloaded song from file
             internals.trim_song(text_file)
             # and append it at the end of file
             with open(text_file, 'a') as myfile:
                 myfile.write(raw_song + '\n')
+            log.error(repr(e))
             log.warning('Failed to download song. Will retry after other songs\n')
             # wait 0.5 sec to avoid infinite looping
             time.sleep(0.5)

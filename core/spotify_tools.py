@@ -174,7 +174,7 @@ def write_tracks(tracks, text_file):
                 else:
                     track = item
                 try:
-                    track_url = track['uri']
+                    track_url = track['external_urls']['spotify']
                     log.debug(track_url)
                     file_out.write(track_url + '\n')
                     track_urls.append(track_url)
