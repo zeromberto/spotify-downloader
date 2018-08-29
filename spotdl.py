@@ -32,7 +32,7 @@ def check_exists(music_file, raw_song, meta_tags):
             os.remove(os.path.join(const.args.folder, song))
             continue
         # check if any song with same name is already present in the given folder
-        if str(song).rstrip('.mp3') == music_file:
+        if os.path.splitext(song)[0] == music_file:
             log.debug('Found an already existing song: "{}"'.format(song))
             if internals.is_spotify(raw_song):
                 # check if the already downloaded song has correct metadata
