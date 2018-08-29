@@ -31,16 +31,14 @@ def check_exists(music_file, raw_song, meta_tags):
         if song.endswith('.temp'):
             os.remove(os.path.join(const.args.folder, song))
             continue
-        # check if any song with similar name is already present in the given folder
-        if song.startswith(music_file):
+        # check if any song with same name is already present in the given folder
+        if str(song).rstrip('.mp3') == music_file:
             log.debug('Found an already existing song: "{}"'.format(song))
             if internals.is_spotify(raw_song):
                 # check if the already downloaded song has correct metadata
                 # if not, remove it and download again without prompt
-                already_tagged = metadata.compare(os.path.join(const.args.folder, song),
-                                                  meta_tags)
-                log.debug('Checking if it is already tagged correctly? {}',
-                                                            already_tagged)
+                already_tagged = metadata.compare(os.path.join(const.args.folder, song), meta_tags)
+                log.debug('Checking if it is already tagged correctly? {}', already_tagged)
                 if not already_tagged:
                     os.remove(os.path.join(const.args.folder, song))
                     return False
@@ -161,6 +159,7 @@ def download_single(raw_song, number=None):
 
     if const.args.dry_run:
         log.info(songname)
+        check_exists(songname, raw_song, meta_tags)
         return
 
     if not check_exists(songname, raw_song, meta_tags):
