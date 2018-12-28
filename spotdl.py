@@ -44,7 +44,7 @@ def check_exists(music_file, raw_song, meta_tags):
                     return False
 
             # log.warning('"{}" already exists'.format(song))
-            log.info('Skipping "{}"'.format(song))
+            log.debug('Skipping "{}"'.format(song))
             return True
 
             # log.warning('"{}" already exists'.format(song))
