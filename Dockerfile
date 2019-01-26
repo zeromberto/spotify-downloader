@@ -82,3 +82,5 @@ COPY ./bash ./bash
 COPY ./core ./core
 COPY ./spotdl.py ./spotdl.py
 COPY ./run.sh ./run.sh
+
+RUN chmod +x ./bash/pulseaudio_startup.sh ./run.sh
