@@ -7,7 +7,6 @@ from math import isclose
 
 from django.urls import reverse
 from selenium import webdriver
-from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.support.wait import WebDriverWait
 
 from core.const import log
@@ -16,18 +15,27 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
 def play_and_record(track_uri, file_name, track_name):
-    options = Options()
-    options.add_argument('--headless')
-    log.debug('Firefox starting')
-    driver = webdriver.Firefox(firefox_options=options, firefox_profile=BASE_DIR + '/my.default')
-    log.debug('Firefox ready')
+    log.debug('Chrome starting')
+    chrome_options = webdriver.ChromeOptions()
+    chrome_options.add_argument('--no-sandbox')
+    chrome_options.add_argument('--headless')
+    chrome_options.add_argument('--disable-gpu')
+    driver = webdriver.Chrome(chrome_options=chrome_options)
+    log.debug('Chrome ready')
     driver.implicitly_wait(10)
     try:
         driver.get('%s%s' % ('http://localhost:8000', reverse('spotify_downloader_app:login')))
         WebDriverWait(driver, 30).until(lambda driver: driver.execute_script('return document.readyState').__eq__('complete'))
-        WebDriverWait(driver, 30).until(lambda driver: driver.execute_script('return ready'))
+        user_email = driver.find_element_by_id("login-username")
+        user_email.send_keys(os.getenv("USERNAME"))
+        user_password = driver.find_element_by_id("login-password")
+        user_password.send_keys(os.getenv("PASSWORD"))
+        login_btn = driver.find_element_by_id("login-button")
+        login_btn.click()
+        driver.implicitly_wait(1)
+
+        WebDriverWait(driver, 30).until(lambda driver: driver.execute_script('return document.readyState').__eq__('complete'))
         log.debug(driver.execute_script('return document.readyState'))
-        log.debug(driver.execute_script('return ready'))
         driver.find_element_by_id('uri').send_keys(track_uri)
         driver.find_element_by_id('play').click()
 
