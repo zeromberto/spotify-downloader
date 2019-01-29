@@ -22,7 +22,7 @@ RUN apt-get update \
         python3.6 \
         python3.6-dev \
         python3-pip \
-        firefox \
+        chromium-chromedriver \
         \
         libsasl2-dev \
         libmysqlclient-dev \
@@ -65,11 +65,6 @@ WORKDIR /app
 ENV DJANGO_SETTINGS_MODULE=spotify_downloader.settings
 COPY ./requirements.txt ./
 RUN python3.6 -m pip install -r requirements.txt
-RUN wget https://github.com/mozilla/geckodriver/releases/download/v0.24.0/geckodriver-v0.24.0-linux64.tar.gz \
-	&& tar -xvzf geckodriver-v0.24.0-linux64.tar.gz \
-	&& chmod +x geckodriver \
-	&& mv geckodriver /usr/local/bin/ \
-	&& rm geckodriver-v0.24.0-linux64.tar.gz
 
 # Nginx configuration
 COPY ./site.conf /etc/nginx/sites-enabled/
@@ -77,7 +72,6 @@ COPY ./site.conf /etc/nginx/sites-enabled/
 ENV APP_NAME=spotify_downloader
 COPY ./spotify_downloader ./spotify_downloader
 COPY ./spotify_downloader_app ./spotify_downloader_app
-COPY ./my.default ./my.default
 COPY ./bash ./bash
 COPY ./core ./core
 COPY ./spotdl.py ./spotdl.py
