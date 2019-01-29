@@ -65,11 +65,11 @@ WORKDIR /app
 ENV DJANGO_SETTINGS_MODULE=spotify_downloader.settings
 COPY ./requirements.txt ./
 RUN python3.6 -m pip install -r requirements.txt
-RUN wget https://github.com/mozilla/geckodriver/releases/download/v0.20.0/geckodriver-v0.20.0-linux64.tar.gz \
-	&& tar -xvzf geckodriver-v0.20.0-linux64.tar.gz \
+RUN wget https://github.com/mozilla/geckodriver/releases/download/v0.24.0/geckodriver-v0.24.0-linux64.tar.gz \
+	&& tar -xvzf geckodriver-v0.24.0-linux64.tar.gz \
 	&& chmod +x geckodriver \
 	&& mv geckodriver /usr/local/bin/ \
-	&& rm geckodriver-v0.20.0-linux64.tar.gz
+	&& rm geckodriver-v0.24.0-linux64.tar.gz
 
 # Nginx configuration
 COPY ./site.conf /etc/nginx/sites-enabled/
