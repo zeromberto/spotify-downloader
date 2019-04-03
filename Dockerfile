@@ -6,7 +6,7 @@ RUN apt-get update \
         locales \
         wget \
         unzip \
-    && add-apt-repository ppa:jonathonf/python-3.6 \
+    && add-apt-repository ppa:deadsnakes/ppa \
     && apt-get update \
     && apt-get install -y \
         pulseaudio \
@@ -20,8 +20,8 @@ RUN apt-get update \
 		\
 		supervisor \
         \
-        python3.6 \
-        python3.6-dev \
+        python3.7 \
+        python3.7-dev \
         python3-pip \
         chromium-chromedriver \
         \
@@ -45,8 +45,8 @@ RUN rm -rf /etc/nginx/sites-available/* && rm -rf /etc/nginx/sites-enabled/*
 # Copy config
 COPY ./nginx.conf /etc/nginx/nginx.conf
 RUN mkdir -p /app/run && mkdir -p /app/log && chmod -R 777 /app/log
-RUN python3.6 -m pip install --upgrade pip
-RUN python3.6 -m pip install uwsgi
+RUN python3 -m pip install --upgrade pip
+RUN python3 -m pip install uwsgi
 
 
 # Copy config files
@@ -62,10 +62,9 @@ RUN useradd -ms /bin/bash -G www-data app-user && \
 CMD ["supervisord", "-n", "-c", "/app/run/supervisord.conf", "-u", "root"]
 WORKDIR /app
 
-
 ENV DJANGO_SETTINGS_MODULE=spotify_downloader.settings
 COPY ./requirements.txt ./
-RUN python3.6 -m pip install -r requirements.txt
+RUN python3 -m pip install -r requirements.txt
 RUN wget https://chromedriver.storage.googleapis.com/2.45/chromedriver_linux64.zip \
 	&& unzip chromedriver_linux64.zip \
 	&& chmod +x chromedriver \

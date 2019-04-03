@@ -1,18 +1,18 @@
 #!/bin/bash
 # Get playlists
-python3.6 spotdl.py -u"${USERNAME}"
-foo=${POSTFIX:="_d"}
-FILEENDING="*${POSTFIX}.txt"
+python3 spotdl.py -u"${USERNAME}"
+FILEENDING="*${POSTFIX:-"_d"}.txt"
+PATH_PREFIX=${PATH_PREFIX:-"/data"}
 
 # Download tracks within playlists with postfix
 for i in ${FILEENDING}; do
-    [ -f "$i" ] || break
+    [[ -f "$i" ]] || break
     folder=${i%_*}
-    mkdir -p "/data/$folder"
-    python3.6 spotdl.py --list="$i" -f "/data/$folder"
+    mkdir -p "${PATH_PREFIX}/$folder"
+    python3 spotdl.py --list="$i" -f "${PATH_PREFIX}/$folder"
 
-    if [ -f "$i" ]; then
+    if [[ -f "$i" ]]; then
         rm "$i"
     fi
 done
-chmod -R 777 /data/*
+chmod -R 777 ${PATH_PREFIX}/*
