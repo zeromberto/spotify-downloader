@@ -4,6 +4,7 @@ db.sqlite3
 config.yml
 Music/
 *.txt
+!requirements.txt
 upload.sh
 .pytest_cache/
 
