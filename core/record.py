@@ -6,6 +6,7 @@ import time
 from math import isclose
 
 from django.urls import reverse
+from pyvirtualdisplay import Display
 from selenium import webdriver
 from selenium.webdriver.support.wait import WebDriverWait
 
@@ -15,11 +16,13 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
 def play_and_record(track_uri, file_name, track_name):
+    log.debug('Display starting')
+    display = Display(visible=0, size=(800, 600))
+    display.start()
+    log.debug('Display ready')
+
     log.debug('Chrome starting')
     chrome_options = webdriver.ChromeOptions()
-    chrome_options.add_argument('--no-sandbox')
-    chrome_options.add_argument('--headless')
-    chrome_options.add_argument('--disable-gpu')
     driver = webdriver.Chrome(chrome_options=chrome_options)
     log.debug('Chrome ready')
     driver.implicitly_wait(10)
@@ -37,6 +40,8 @@ def play_and_record(track_uri, file_name, track_name):
         WebDriverWait(driver, 30).until(lambda driver: driver.execute_script('return document.readyState').__eq__('complete'))
         log.debug(driver.execute_script('return document.readyState'))
         driver.find_element_by_id('uri').send_keys(track_uri)
+        WebDriverWait(driver, 30).until(lambda driver: is_ready(driver))
+        log.debug('player ready')
         driver.find_element_by_id('play').click()
 
         WebDriverWait(driver, 30).until(lambda driver: is_playing(driver))
@@ -48,8 +53,10 @@ def play_and_record(track_uri, file_name, track_name):
     except Exception as e:
         log.error(repr(e))
     finally:
-        log.debug('Quitting firefox')
+        log.debug('Quitting chrome')
         driver.quit()
+        log.debug('Quitting display')
+        display.stop()
 
 
 def is_playing(driver):
@@ -69,6 +76,13 @@ def is_paused(driver):
             return True
     except (KeyError, TypeError):
         pass
+    return False
+
+
+def is_ready(driver):
+    ready = driver.execute_script('return ready')
+    if ready:
+        return True
     return False
 
 

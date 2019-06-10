@@ -20,6 +20,7 @@ RUN apt-get update \
 		\
 		supervisor \
         \
+        xvfb \
         python3.7 \
         python3.7-dev \
         python3-pip \
