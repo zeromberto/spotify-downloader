@@ -66,7 +66,7 @@ WORKDIR /app
 ENV DJANGO_SETTINGS_MODULE=spotify_downloader.settings
 COPY ./requirements.txt ./
 RUN python3 -m pip install -r requirements.txt
-RUN wget https://chromedriver.storage.googleapis.com/2.45/chromedriver_linux64.zip \
+RUN wget https://chromedriver.storage.googleapis.com/2.46/chromedriver_linux64.zip \
 	&& unzip chromedriver_linux64.zip \
 	&& chmod +x chromedriver \
 	&& mv chromedriver /usr/local/bin/ \

@@ -23,6 +23,7 @@ def play_and_record(track_uri, file_name, track_name):
 
     log.debug('Chrome starting')
     chrome_options = webdriver.ChromeOptions()
+    chrome_options.add_argument('--no-sandbox')
     driver = webdriver.Chrome(chrome_options=chrome_options)
     log.debug('Chrome ready')
     driver.implicitly_wait(10)
