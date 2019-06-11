@@ -24,7 +24,7 @@ RUN apt-get update \
         python3.7 \
         python3.7-dev \
         python3-pip \
-        chromium-chromedriver \
+        chromium-browser \
         \
         libsasl2-dev \
         libmysqlclient-dev \

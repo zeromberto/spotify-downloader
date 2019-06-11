@@ -27,6 +27,7 @@ def play_and_record(track_uri, file_name, track_name):
     driver = webdriver.Chrome(chrome_options=chrome_options)
     log.debug('Chrome ready')
     driver.implicitly_wait(10)
+    log.debug(driver.capabilities)
     try:
         driver.get('%s%s' % ('http://localhost:8000', reverse('spotify_downloader_app:login')))
         WebDriverWait(driver, 30).until(lambda driver: driver.execute_script('return document.readyState').__eq__('complete'))
@@ -38,22 +39,28 @@ def play_and_record(track_uri, file_name, track_name):
         login_btn.click()
         driver.implicitly_wait(1)
 
-        WebDriverWait(driver, 30).until(lambda driver: driver.execute_script('return document.readyState').__eq__('complete'))
-        log.debug(driver.execute_script('return document.readyState'))
-        driver.find_element_by_id('uri').send_keys(track_uri)
-        WebDriverWait(driver, 30).until(lambda driver: is_ready(driver))
+        WebDriverWait(driver, 10).until(lambda driver: driver.execute_script('return document.readyState').__eq__('complete'))
+        log.debug('page loaded')
+
+        time.sleep(1)
+        WebDriverWait(driver, 60).until(lambda driver: is_ready(driver))
         log.debug('player ready')
+
+        driver.find_element_by_id('uri').send_keys(track_uri)
         driver.find_element_by_id('play').click()
 
         WebDriverWait(driver, 30).until(lambda driver: is_playing(driver))
         log.debug('playing')
-
-        record(driver, file_name, track_name)
+        time.sleep(1)
+        # record(driver, file_name, track_name)
     except TimeoutError as e:
         log.error(repr(e))
     except Exception as e:
         log.error(repr(e))
     finally:
+        log.debug('Browser logs')
+        logs = driver.get_log('browser')
+        log.debug(logs)
         log.debug('Quitting chrome')
         driver.quit()
         log.debug('Quitting display')
@@ -81,9 +88,12 @@ def is_paused(driver):
 
 
 def is_ready(driver):
-    ready = driver.execute_script('return ready')
-    if ready:
-        return True
+    try:
+        ready = driver.execute_script('return ready')
+        if ready:
+            return True
+    except:
+        return False
     return False
 
 
