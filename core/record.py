@@ -5,106 +5,12 @@ import subprocess
 import time
 from math import isclose
 
-from django.urls import reverse
-from pyvirtualdisplay import Display
-from selenium import webdriver
-from selenium.webdriver.support.wait import WebDriverWait
-
 from core.const import log
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
-def play_and_record(track_uri, file_name, track_name):
-    # if os.getenv("IN_DOCKER"):
-    #     log.debug('Display starting')
-    #     display = Display(size=(800, 600))
-    #     display.start()
-    #     log.debug('Display ready')
-
-    log.debug('Chrome starting')
-    chrome_options = webdriver.ChromeOptions()
-    chrome_options.add_argument('--no-sandbox')
-    if os.getenv("IN_DOCKER"):
-        chrome_options.add_argument('--headless')
-    user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36'
-    chrome_options.add_argument('user-agent={}'.format(user_agent))
-    chrome_options.add_experimental_option('excludeSwitches', ['disable-component-update', 'mute-audio', 'hide-scrollbars'])
-    driver = webdriver.Chrome(chrome_options=chrome_options)
-    log.debug('Chrome ready')
-    driver.implicitly_wait(10)
-    log.debug(driver.capabilities)
-    try:
-        driver.get('%s%s' % ('http://localhost:8000', reverse('spotify_downloader_app:login')))
-        WebDriverWait(driver, 30).until(lambda driver: driver.execute_script('return document.readyState').__eq__('complete'))
-        user_email = driver.find_element_by_id("login-username")
-        user_email.send_keys(os.getenv("USERNAME"))
-        user_password = driver.find_element_by_id("login-password")
-        user_password.send_keys(os.getenv("PASSWORD"))
-        login_btn = driver.find_element_by_id("login-button")
-        login_btn.click()
-        driver.implicitly_wait(1)
-
-        WebDriverWait(driver, 10).until(lambda driver: driver.execute_script('return document.readyState').__eq__('complete'))
-        log.debug('page loaded')
-
-        time.sleep(1)
-        WebDriverWait(driver, 20).until(lambda driver: is_ready(driver))
-        log.debug('player ready')
-
-        driver.find_element_by_id('uri').send_keys(track_uri)
-        driver.find_element_by_id('play').click()
-
-        WebDriverWait(driver, 20).until(lambda driver: is_playing(driver))
-        log.debug('playing')
-
-        record(driver, file_name, track_name)
-    except TimeoutError as e:
-        log.error('Player did not start')
-    except Exception as e:
-        log.error(e)
-    finally:
-        log.debug('Browser logs')
-        logs = driver.get_log('browser')
-        log.debug(logs)
-        log.debug('Quitting chrome')
-        driver.quit()
-        # if os.getenv("IN_DOCKER"):
-        #     log.debug('Quitting display')
-        #     display.stop()
-
-
-def is_playing(driver):
-    state = driver.execute_script('return player_state')
-    try:
-        if not state['paused']:
-            return True
-    except (KeyError, TypeError):
-        pass
-    return False
-
-
-def is_paused(driver):
-    state = driver.execute_script('return player_state')
-    try:
-        if state['paused']:
-            return True
-    except (KeyError, TypeError):
-        pass
-    return False
-
-
-def is_ready(driver):
-    try:
-        ready = driver.execute_script('return ready')
-        if ready:
-            return True
-    except:
-        return False
-    return False
-
-
-def record(driver, file_name, track_name):
+def record(file_name, track_name, stop_recording_handler):
     log.info('Recording {} to {}'.format(track_name, file_name))
     try:
         FNULL = open(os.devnull, 'w')
@@ -112,7 +18,8 @@ def record(driver, file_name, track_name):
             ['ffmpeg', '-f', 'pulse', '-i', 'default', '-b:a', '320k', '-f', 'mp3', file_name],
             stdout=FNULL, stderr=subprocess.STDOUT)
         log.debug('started recording')
-        WebDriverWait(driver, 900).until(lambda driver: is_paused(driver))
+        while not stop_recording_handler():
+            time.sleep(0.01)
         log.debug('finished')
         record_process.terminate()
     except Exception as e:
