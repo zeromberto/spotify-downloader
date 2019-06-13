@@ -16,14 +16,20 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
 def play_and_record(track_uri, file_name, track_name):
-    log.debug('Display starting')
-    display = Display(visible=0, size=(800, 600))
-    display.start()
-    log.debug('Display ready')
+    # if os.getenv("IN_DOCKER"):
+    #     log.debug('Display starting')
+    #     display = Display(size=(800, 600))
+    #     display.start()
+    #     log.debug('Display ready')
 
     log.debug('Chrome starting')
     chrome_options = webdriver.ChromeOptions()
     chrome_options.add_argument('--no-sandbox')
+    if os.getenv("IN_DOCKER"):
+        chrome_options.add_argument('--headless')
+    user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36'
+    chrome_options.add_argument('user-agent={}'.format(user_agent))
+    chrome_options.add_experimental_option('excludeSwitches', ['disable-component-update', 'mute-audio', 'hide-scrollbars'])
     driver = webdriver.Chrome(chrome_options=chrome_options)
     log.debug('Chrome ready')
     driver.implicitly_wait(10)
@@ -43,28 +49,29 @@ def play_and_record(track_uri, file_name, track_name):
         log.debug('page loaded')
 
         time.sleep(1)
-        WebDriverWait(driver, 60).until(lambda driver: is_ready(driver))
+        WebDriverWait(driver, 20).until(lambda driver: is_ready(driver))
         log.debug('player ready')
 
         driver.find_element_by_id('uri').send_keys(track_uri)
         driver.find_element_by_id('play').click()
 
-        WebDriverWait(driver, 30).until(lambda driver: is_playing(driver))
+        WebDriverWait(driver, 20).until(lambda driver: is_playing(driver))
         log.debug('playing')
-        time.sleep(1)
-        # record(driver, file_name, track_name)
+
+        record(driver, file_name, track_name)
     except TimeoutError as e:
-        log.error(repr(e))
+        log.error('Player did not start')
     except Exception as e:
-        log.error(repr(e))
+        log.error(e)
     finally:
         log.debug('Browser logs')
         logs = driver.get_log('browser')
         log.debug(logs)
         log.debug('Quitting chrome')
         driver.quit()
-        log.debug('Quitting display')
-        display.stop()
+        # if os.getenv("IN_DOCKER"):
+        #     log.debug('Quitting display')
+        #     display.stop()
 
 
 def is_playing(driver):

@@ -9,7 +9,7 @@ for i in ${FILEENDING}; do
     [[ -f "$i" ]] || break
     folder=${i%_*}
     mkdir -p "${PATH_PREFIX}/$folder"
-    python3 spotdl.py --list="$i" -f "${PATH_PREFIX}/$folder"
+    python3 spotdl.py --list="$i" -f "${PATH_PREFIX}/$folder" -ll DEBUG
 
     if [[ -f "$i" ]]; then
         rm "$i"

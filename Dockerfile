@@ -76,6 +76,7 @@ RUN wget https://chromedriver.storage.googleapis.com/2.46/chromedriver_linux64.z
 COPY ./site.conf /etc/nginx/sites-enabled/
 # App configuration
 ENV APP_NAME=spotify_downloader
+ENV IN_DOCKER=true
 COPY ./spotify_downloader ./spotify_downloader
 COPY ./spotify_downloader_app ./spotify_downloader_app
 COPY ./bash ./bash
