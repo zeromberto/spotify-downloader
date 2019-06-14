@@ -1,33 +1,35 @@
-FROM ubuntu:xenial
+FROM ubuntu:18.04
 
 RUN apt-get update \
     && apt-get install -y \
         software-properties-common \
         locales \
         wget \
-        unzip \
-    && add-apt-repository ppa:deadsnakes/ppa \
-    && apt-get update \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN apt-get update \
     && apt-get install -y \
         pulseaudio \
         socat \
         alsa-utils \
         ffmpeg \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN apt-get update \
+    && apt-get install -y \
+        supervisor \
         \
-        nginx \
-		ca-certificates \
-		libssl-dev \
-		\
-		supervisor \
-        \
-        xvfb \
         python3.7 \
         python3.7-dev \
         python3-pip \
-        chromium-browser \
-        \
-        libsasl2-dev \
-        libmysqlclient-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN wget -q -O - https://apt.mopidy.com/mopidy.gpg | apt-key add - \
+    && wget -q -O /etc/apt/sources.list.d/mopidy.list https://apt.mopidy.com/stretch.list \
+    && apt-get update \
+    && apt-get install -y \
+        mopidy \
+        mopidy-spotify \
     && rm -rf /var/lib/apt/lists/*
 
 RUN locale-gen en_US.UTF-8
@@ -40,48 +42,24 @@ RUN useradd --create-home --home-dir /home/pulseaudio pulseaudio \
 
 COPY client.conf /etc/pulse/client.conf
 COPY daemon.conf /etc/pulse/daemon.conf
+RUN mkdir -p /root/.config/mopidy
+COPY mopidy.conf /root/.config/mopidy/mopidy.conf
 
-# Clean nginx configs
-RUN rm -rf /etc/nginx/sites-available/* && rm -rf /etc/nginx/sites-enabled/*
-# Copy config
-COPY ./nginx.conf /etc/nginx/nginx.conf
-RUN mkdir -p /app/run && mkdir -p /app/log && chmod -R 777 /app/log
+RUN mkdir -p /app/run && mkdir -p /app/log && chmod -R 777 /app/log && chmod 777 /app
 RUN python3 -m pip install --upgrade pip
-RUN python3 -m pip install uwsgi
 
+COPY entrypoint.sh /entrypoint.sh
+ENTRYPOINT ["/entrypoint.sh"]
 
-# Copy config files
-COPY supervisor.conf /app/run/supervisord.conf
-# UWSGI configuration
-ENV UWSGI_MASTER=1 UWSGI_WORKERS=3 UWSGI_THREADS=3
-# User config
-RUN useradd -ms /bin/bash -G www-data app-user && \
-	usermod -a -G app-user www-data && \
-	chown -R app-user /app && \
-	chmod -R 777 /app && \
-	chown -R www-data /var/lib/nginx
-CMD ["supervisord", "-n", "-c", "/app/run/supervisord.conf", "-u", "root"]
 WORKDIR /app
 
-ENV DJANGO_SETTINGS_MODULE=spotify_downloader.settings
 COPY ./requirements.txt ./
 RUN python3 -m pip install -r requirements.txt
-RUN wget https://chromedriver.storage.googleapis.com/2.46/chromedriver_linux64.zip \
-	&& unzip chromedriver_linux64.zip \
-	&& chmod +x chromedriver \
-	&& mv chromedriver /usr/local/bin/ \
-	&& rm chromedriver_linux64.zip
 
-# Nginx configuration
-COPY ./site.conf /etc/nginx/sites-enabled/
-# App configuration
-ENV APP_NAME=spotify_downloader
-ENV IN_DOCKER=true
-COPY ./spotify_downloader ./spotify_downloader
-COPY ./spotify_downloader_app ./spotify_downloader_app
+COPY supervisor.conf ./run/supervisord.conf
 COPY ./bash ./bash
 COPY ./core ./core
 COPY ./spotdl.py ./spotdl.py
 COPY ./run.sh ./run.sh
 
-RUN chmod +x ./bash/pulseaudio_startup.sh ./run.sh
+CMD ["supervisord", "-n", "-c", "/app/run/supervisord.conf", "-u", "root"]
