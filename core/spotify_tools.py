@@ -16,8 +16,8 @@ import sys
 def generate_token():
     """ Generate the token. Please respect these credentials :) """
     credentials = oauth2.SpotifyClientCredentials(
-        client_id='4fe3fecfe5334023a1472516cc99d805',
-        client_secret='0f02b7c483c04257984695007a4a8d5c',
+        client_id=os.getenv('SPOTDL_CLIENT_ID'),
+        client_secret=os.getenv('SPOTDL_CLIENT_SECRET'),
         )
     token = credentials.get_access_token()
     return token
