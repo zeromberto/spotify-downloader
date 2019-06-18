@@ -1,29 +1,60 @@
 import os
+import threading
+import time
 
-from mopidy_spotify import backend, playback
-from mopidy import audio, backend as models
-from mopidy import __main__ as momain
-
+from core.const import log
+from core.record import record
 from mopidy_json_client import MopidyClient
 
-mopidy = MopidyClient()
-
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-# extensions_data = ext.load_extensions()
-# mopidy_config, config_errors = config.load(BASE_DIR + '/mopidy.conf',
-#                                            [d.config_schema for d in extensions_data],
-#                                            [d.config_defaults for d in extensions_data],
-#                                            None)
 
 
-def play_and_record(filename="foo", track_uri="spotify:track:1L1dpImK36DoZPr7rxy0hJ"):
-    momain.main()
-    m_backend = backend.SpotifyBackend(mopidy_config, m_audio)
-    m_backend.start()
-    player = playback.SpotifyPlaybackProvider(audio=m_audio, backend=m_backend)
-    track = models.Track(uri=track_uri)
+class PlayerListener(object):
+    playback_stopped = False
+    filename = ''
+    songname = ''
 
-    player.change_track(track)
+    def get_playback_stopped(self):
+        return self.playback_stopped
+
+    def mopidy_playback_stopped(self):
+        log.debug('stopped playback')
+        self.playback_stopped = True
+
+    def mopidy_playback_started(self):
+        log.debug('started playback')
+        self.playback_stopped = False
+        self.start_recording()
+
+    def start_recording(self):
+        log.debug('start recording')
+        record(self.filename, self.songname, self.get_playback_stopped)
 
 
-play_and_record()
+def play_and_record(track_uri="spotify:track:1L1dpImK36DoZPr7rxy0hJ", filename="foo", songname="bar"):
+    log.debug("entered playing and record")
+    client = MopidyClient(debug=True)
+    listener = PlayerListener()
+    listener.filename = filename
+    listener.songname = songname
+
+    def mopidy_playback_state_changed(old_state, new_state):
+        log.debug("received event")
+        if new_state == 'stopped' and old_state == 'playing':
+            listener.mopidy_playback_stopped()
+
+    client.bind_event('playback_state_changed', mopidy_playback_state_changed)
+
+    client.playback.stop()
+    client.tracklist.set_repeat(False)
+    client.tracklist.clear()
+    client.mixer.set_mute(False)
+    client.mixer.set_volume(100)
+    client.tracklist.add(uri=track_uri)
+    # threading.Thread(target=).start()
+    # time.sleep(0.05)
+    client.playback.play()
+    listener.mopidy_playback_started()
+    while not listener.get_playback_stopped():
+        time.sleep(0.01)
+    time.sleep(1)

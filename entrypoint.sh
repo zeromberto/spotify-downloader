@@ -2,7 +2,7 @@
 
 set -e
 
-CONFIG_FILE=/root/.config/mopidy/mopidy.conf
+CONFIG_FILE=/var/lib/mopidy/.config/mopidy/mopidy.conf
 
 sed -i "s/^username =.*$/username = ${USERNAME}/" $CONFIG_FILE
 sed -i "s/^password =.*$/password = ${PASSWORD}/" $CONFIG_FILE

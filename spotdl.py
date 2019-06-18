@@ -15,6 +15,7 @@ from core import const
 from core import handle
 from core import internals
 from core import metadata
+from core import player
 from core import record
 from core import spotify_tools
 from core import youtube_tools
@@ -69,6 +70,8 @@ def check_exists(music_file, raw_song, meta_tags):
 
 def download_list(text_file):
     """ Download all songs from the list. """
+    log.debug('Python version: {}'.format(sys.version))
+    log.debug('Platform: {}'.format(platform.platform()))
     with open(text_file, 'r') as listed:
         lines = (listed.read()).splitlines()
     # ignore blank lines in text_file (if any)
@@ -167,7 +170,7 @@ def download_single(raw_song, number=None):
         songpath = os.path.join(const.args.folder, os.path.dirname(songname))
         os.makedirs(songpath, exist_ok=True)
         file_name = os.path.join(const.args.folder, songname + const.args.output_ext)
-        record.play_and_record(meta_tags['uri'], file_name, songname)
+        player.play_and_record(meta_tags['uri'], file_name, songname)
         if not record.verify_length(file_name, meta_tags['duration']):
             log.error('Duration mismatch! Deleting: {}'.format(songname))
             os.remove(file_name)
