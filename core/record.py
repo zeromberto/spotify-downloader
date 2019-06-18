@@ -15,7 +15,8 @@ def record(file_name, track_name, stop_recording_handler):
     try:
         FNULL = open(os.devnull, 'w')
         record_process = subprocess.Popen(
-            ['ffmpeg', '-f', 'pulse', '-i', 'default', '-b:a', '320k', '-f', 'mp3', file_name],
+            # ['ffmpeg', '-f', 'pulse', '-i', 'default', '-ac', '1', '-ar', '48000', file_name],
+            ['ffmpeg', '-f', 'pulse', '-i', 'default', '-b:a', '320k', '-ar', '48000', '-f', 'mp3', file_name],
             stdout=FNULL, stderr=subprocess.STDOUT)
         log.debug('started recording')
         while not stop_recording_handler():
