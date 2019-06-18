@@ -3,6 +3,7 @@
 import os
 import platform
 import pprint
+import re
 import sys
 import time
 import urllib.request
@@ -18,7 +19,6 @@ from core import metadata
 from core import player
 from core import record
 from core import spotify_tools
-from core import youtube_tools
 
 __version__ = '0.9.3'
 
@@ -44,31 +44,12 @@ def check_exists(music_file, raw_song, meta_tags):
                     os.remove(os.path.join(const.args.folder, song))
                     return False
 
-            # log.warning('"{}" already exists'.format(song))
             log.debug('Skipping "{}"'.format(song))
             return True
-
-            # log.warning('"{}" already exists'.format(song))
-            # if const.args.overwrite == 'prompt':
-            #     log.info('"{}" has already been downloaded. '
-            #              'Re-download? (y/N): '.format(song))
-            #     prompt = input('> ')
-            #     if prompt.lower() == 'y':
-            #         os.remove(os.path.join(const.args.folder, song))
-            #         return False
-            #     else:
-            #         return True
-            # elif const.args.overwrite == 'force':
-            #     os.remove(os.path.join(const.args.folder, song))
-            #     log.info('Overwriting "{}"'.format(song))
-            #     return False
-            # elif const.args.overwrite == 'skip':
-            #     log.info('Skipping "{}"'.format(song))
-            #     return True
     return False
 
 
-def download_list(text_file):
+def download_list(text_file, folder=None):
     """ Download all songs from the list. """
     log.debug('Python version: {}'.format(sys.version))
     log.debug('Platform: {}'.format(platform.platform()))
@@ -88,17 +69,17 @@ def download_list(text_file):
     for number, raw_song in enumerate(lines, 1):
         if time.time() > timeout:
             log.info('Playlist timeout! Stopping download of playlist.\nDownloaded {} tracks.'.format(number-1))
-            return downloaded_songs
+            return False
 
         try:
-            download_single(raw_song, number=number)
+            download_single(raw_song, number=number, folder=folder)
         # token expires after 1 hour
         except spotipy.client.SpotifyException:
             # refresh token when it expires
             log.debug('Token expired, generating new one and authorizing')
             new_token = spotify_tools.generate_token()
             spotify_tools.spotify = spotipy.Spotify(auth=new_token)
-            download_single(raw_song, number=number)
+            download_single(raw_song, number=number, folder=folder)
         # detect network problems
         except (urllib.request.URLError, TypeError, IOError) as e:
             lines.append(raw_song)
@@ -118,34 +99,19 @@ def download_list(text_file):
         internals.trim_song(text_file)
 
     log.info('Finished downloading {} songs from {}\n'.format(len(downloaded_songs), str(text_file).rsplit('/')[-1]))
-    return downloaded_songs
+    return True
 
 
-def download_single(raw_song, number=None):
+def download_single(raw_song, number=None, folder=None):
     """ Logic behind downloading a song. """
-    if internals.is_youtube(raw_song):
-        log.debug('Input song is a YouTube URL')
-        content = youtube_tools.go_pafy(raw_song, meta_tags=None)
-        raw_song = slugify(content.title).replace('-', ' ')
-        meta_tags = spotify_tools.generate_metadata(raw_song)
-    else:
-        meta_tags = spotify_tools.generate_metadata(raw_song)
+    meta_tags = spotify_tools.generate_metadata(raw_song)
 
         # content = youtube_tools.go_pafy(raw_song, meta_tags)
 
-    # if content is None:
-    #     log.debug('Found no matching video')
-    #     return
-    #
     if const.args.download_only_metadata and meta_tags is None:
         log.info('Found no metadata. Skipping the download')
         return
 
-    # "[number]. [artist] - [song]" if downloading from list
-    # otherwise "[artist] - [song]"
-    # youtube_title = youtube_tools.get_youtube_title(content, number)
-    # log.info('{} ({})'.format(youtube_title, content.watchv_url))
-    #
     # generate file name of the song to download
     songname = 'foo'
 
@@ -167,9 +133,13 @@ def download_single(raw_song, number=None):
 
     if not check_exists(songname, raw_song, meta_tags):
         # deal with file formats containing slashes to non-existent directories
-        songpath = os.path.join(const.args.folder, os.path.dirname(songname))
+        if folder:
+            folder_path = folder
+        else:
+            folder_path = const.args.folder
+        songpath = os.path.join(folder_path, os.path.dirname(songname))
         os.makedirs(songpath, exist_ok=True)
-        file_name = os.path.join(const.args.folder, songname + const.args.output_ext)
+        file_name = os.path.join(folder_path, songname + const.args.output_ext)
         player.play_and_record(meta_tags['uri'], file_name, songname)
         if not record.verify_length(file_name, meta_tags['duration']):
             log.error('Duration mismatch! Deleting: {}'.format(songname))
@@ -188,7 +158,6 @@ def main():
         sys.exit()
 
     internals.filter_path(const.args.folder)
-    youtube_tools.set_api_key()
 
     const.log = const.logzero.setup_logger(formatter=const._formatter,
                                       level=const.args.log_level)
@@ -202,7 +171,22 @@ def main():
         if const.args.song:
             download_single(raw_song=const.args.song)
         elif const.args.list:
-            download_list(text_file=const.args.list)
+            if os.path.isdir(const.args.list):
+                files = [f for f in os.listdir(const.args.list) if re.match(r'.*_d\.txt', f)]
+                timeout = time.time() + 5 * 60 * 60
+                index = 1
+                while len(files) > 0:
+                    list_file = files[index]
+                    if time.time() > timeout:
+                        break
+                    folder = os.path.join(const.args.folder, list_file).rstrip('_d.txt')
+                    internals.filter_path(folder)
+                    if download_list(os.path.join(const.args.list, list_file), folder):
+                        files.pop(index)
+                    else:
+                        index = index + 1
+            else:
+                download_list(text_file=const.args.list)
         elif const.args.playlist:
             spotify_tools.write_playlist(playlist_url=const.args.playlist)
         elif const.args.album:
