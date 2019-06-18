@@ -15,14 +15,19 @@ def record(file_name, track_name, stop_recording_handler):
     try:
         FNULL = open(os.devnull, 'w')
         record_process = subprocess.Popen(
-            # ['ffmpeg', '-f', 'pulse', '-i', 'default', '-ac', '1', '-ar', '48000', file_name],
             ['ffmpeg', '-f', 'pulse', '-i', 'default', '-b:a', '320k', '-ar', '48000', '-f', 'mp3', file_name],
             stdout=FNULL, stderr=subprocess.STDOUT)
         log.debug('started recording')
+        timeout = time.time() + 5
+        while time.time() < timeout:
+            time.sleep(0.2)
+        if stop_recording_handler():
+            raise RuntimeError('Playing did not start!')
         while not stop_recording_handler():
-            time.sleep(0.01)
-        log.debug('finished')
+            time.sleep(0.05)
+        time.sleep(1)
         record_process.terminate()
+        log.debug('finished recording')
     except Exception as e:
         log.error(repr(e))
     finally:

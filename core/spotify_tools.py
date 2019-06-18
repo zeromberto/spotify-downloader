@@ -78,7 +78,7 @@ def generate_metadata(raw_song):
     del meta_tags['available_markets']
     del meta_tags['album']['available_markets']
 
-    log.debug(pprint.pformat(meta_tags))
+    #log.debug(pprint.pformat(meta_tags))
     return meta_tags
 
 
