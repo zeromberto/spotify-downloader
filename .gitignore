@@ -4,6 +4,9 @@ secrets.txt
 
 config.yml
 Music/
+data/
+down/
+
 *.txt
 !requirements.txt
 upload.sh
