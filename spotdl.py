@@ -140,8 +140,8 @@ def download_single(raw_song, number=None, folder=None):
         songpath = os.path.join(folder_path, os.path.dirname(songname))
         os.makedirs(songpath, exist_ok=True)
         file_name = os.path.join(folder_path, songname + const.args.output_ext)
-        player.play_and_record(meta_tags['uri'], file_name, songname)
-        if not record.verify_length(file_name, meta_tags['duration']):
+        play_time = player.play_and_record(meta_tags['uri'], file_name, songname)
+        if not record.verify_length(file_name, meta_tags['duration'], play_time):
             log.error('Duration mismatch! Deleting: {}'.format(songname))
             os.remove(file_name)
             return False
@@ -178,6 +178,7 @@ def main():
                 while len(files) > 0:
                     list_file = files[index]
                     if time.time() > timeout:
+                        log.info('Total timeout! Stopping download of playlists.')
                         break
                     folder = os.path.join(const.args.folder, list_file).rstrip('_d.txt')
                     internals.filter_path(folder)
@@ -185,6 +186,8 @@ def main():
                         files.pop(index)
                     else:
                         index = index + 1
+                        if index > len(files):
+                            index = 1
             else:
                 download_list(text_file=const.args.list)
         elif const.args.playlist:
