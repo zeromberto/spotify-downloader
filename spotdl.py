@@ -23,14 +23,14 @@ from core import spotify_tools
 __version__ = '0.9.3'
 
 
-def check_exists(music_file, raw_song, meta_tags):
+def check_exists(music_file, raw_song, meta_tags, folder):
     """ Check if the input song already exists in the given folder. """
     log.debug('Cleaning any temp files and checking '
               'if "{}" already exists'.format(music_file))
-    songs = os.listdir(const.args.folder)
+    songs = os.listdir(folder)
     for song in songs:
         if song.endswith('.temp'):
-            os.remove(os.path.join(const.args.folder, song))
+            os.remove(os.path.join(folder, song))
             continue
         # check if any song with same name is already present in the given folder
         if os.path.splitext(song)[0] == music_file:
@@ -38,10 +38,10 @@ def check_exists(music_file, raw_song, meta_tags):
             if internals.is_spotify(raw_song):
                 # check if the already downloaded song has correct metadata
                 # if not, remove it and download again without prompt
-                already_tagged = metadata.compare(os.path.join(const.args.folder, song), meta_tags)
-                log.debug('Checking if it is already tagged correctly? {}', already_tagged)
+                already_tagged = metadata.compare(os.path.join(folder, song), meta_tags)
+                log.debug('Checking if it is already tagged correctly? {}'.format(already_tagged))
                 if not already_tagged:
-                    os.remove(os.path.join(const.args.folder, song))
+                    os.remove(os.path.join(folder, song))
                     return False
 
             log.debug('Skipping "{}"'.format(song))
@@ -131,7 +131,7 @@ def download_single(raw_song, number=None, folder=None):
         check_exists(songname, raw_song, meta_tags)
         return
 
-    if not check_exists(songname, raw_song, meta_tags):
+    if not check_exists(songname, raw_song, meta_tags, folder):
         # deal with file formats containing slashes to non-existent directories
         if folder:
             folder_path = folder
@@ -173,7 +173,7 @@ def main():
         elif const.args.list:
             if os.path.isdir(const.args.list):
                 files = [f for f in os.listdir(const.args.list) if re.match(r'.*_d\.txt', f)]
-                timeout = time.time() + 5 * 60 * 60
+                timeout = time.time() + int(os.getenv('MAX_DOWNLOAD_TIME_MIN', '300')) * 60
                 index = 1
                 while len(files) > 0:
                     list_file = files[index]
