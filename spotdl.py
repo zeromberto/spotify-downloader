@@ -64,7 +64,7 @@ def download_list(text_file, folder=None):
     shuffle(lines)
     log.info('Preparing to download {} songs from {}\n'.format(len(lines), str(text_file).rsplit('/')[-1]))
     downloaded_songs = []
-    timeout = time.time() + 45 * 60
+    timeout = time.time() + int(os.getenv('MAX_DOWNLOAD_TIME_PLAYLIST_MIN', '45')) * 60
 
     for number, raw_song in enumerate(lines, 1):
         if time.time() > timeout:
@@ -105,8 +105,6 @@ def download_list(text_file, folder=None):
 def download_single(raw_song, number=None, folder=None):
     """ Logic behind downloading a song. """
     meta_tags = spotify_tools.generate_metadata(raw_song)
-
-        # content = youtube_tools.go_pafy(raw_song, meta_tags)
 
     if const.args.download_only_metadata and meta_tags is None:
         log.info('Found no metadata. Skipping the download')
@@ -174,7 +172,7 @@ def main():
             if os.path.isdir(const.args.list):
                 files = [f for f in os.listdir(const.args.list) if re.match(r'.*_d\.txt', f)]
                 timeout = time.time() + int(os.getenv('MAX_DOWNLOAD_TIME_MIN', '300')) * 60
-                index = 1
+                index = 0
                 while len(files) > 0:
                     list_file = files[index]
                     if time.time() > timeout:
@@ -186,8 +184,8 @@ def main():
                         files = files.pop(index)
                     else:
                         index = index + 1
-                        if index > len(files):
-                            index = 1
+                    if index >= len(files):
+                        index = 0
             else:
                 download_list(text_file=const.args.list)
         elif const.args.playlist:

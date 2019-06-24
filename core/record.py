@@ -4,11 +4,11 @@ import re
 import subprocess
 import time
 from math import isclose
-from shutil import copyfile
 
 from core.const import log
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+ffmpeg_debug = True if os.getenv('FFMPEG_DEBUG') else False
 
 
 def record(file_name, track_name, stop_recording_handler):
@@ -54,14 +54,21 @@ def cut_recording(file_name, spoitfy_duration):
     FNULL = open(os.devnull, 'w')
     log.debug('Cutting off start silence')
     copy_name = file_name.replace('.mp3', '.copy.mp3')
-    subprocess.Popen(
-        ['ffmpeg', '-i', file_name, '-af', 'silenceremove=1:0:-50dB', '-b:a', '320k', copy_name],
-        stdout=FNULL, stderr=subprocess.STDOUT).wait()
+    ffmpeg_silence_remove_cmd = ['ffmpeg', '-i', file_name, '-af', 'silenceremove=start_periods=1:start_threshold=0:detection=peak', '-b:a', '320k',
+     '-ar', '48000', '-f', 'mp3', copy_name]
+    if not ffmpeg_debug:
+        subprocess.Popen(ffmpeg_silence_remove_cmd, stdout=FNULL, stderr=subprocess.STDOUT).wait()
+    else:
+        output = subprocess.Popen(ffmpeg_silence_remove_cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT).stdout.read()
+        log.debug(output)
     os.remove(file_name)
     log.debug('Setting track length')
-    subprocess.Popen(
-        ['ffmpeg', '-i', copy_name, '-ss', '0', '-t', str(spoitfy_duration), '-b:a', '320k', file_name],
-        stdout=FNULL, stderr=subprocess.STDOUT).wait()
+    ffmpeg_cut_length_cmd = ['ffmpeg', '-i', copy_name, '-ss', '0', '-t', str(spoitfy_duration), '-b:a', '320k', '-ar', '48000', '-f', 'mp3', file_name]
+    if not ffmpeg_debug:
+        subprocess.Popen(ffmpeg_cut_length_cmd, stdout=FNULL, stderr=subprocess.STDOUT).wait()
+    else:
+        output = subprocess.Popen(ffmpeg_cut_length_cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT).stdout.read()
+        log.debug(output)
     os.remove(copy_name)
     return get_recorded_length(file_name)
 
