@@ -183,7 +183,7 @@ def main():
                     folder = os.path.join(const.args.folder, list_file).rstrip('_d.txt')
                     internals.filter_path(folder)
                     if download_list(os.path.join(const.args.list, list_file), folder):
-                        files.pop(index)
+                        files = files.pop(index)
                     else:
                         index = index + 1
                         if index > len(files):
