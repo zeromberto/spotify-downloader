@@ -38,7 +38,7 @@ def record(file_name, track_name, stop_recording_handler):
     log.info('Finished recording of {}'.format(track_name))
 
 
-def get_recorded_length(file_name, method=2):
+def get_recorded_length(file_name, method=1):
     ffmpeg_get_mediafile_length = ['ffmpeg', '-i', file_name, '-f', 'null', '-']
     output = subprocess.Popen(ffmpeg_get_mediafile_length,
                               stdout=subprocess.PIPE,
