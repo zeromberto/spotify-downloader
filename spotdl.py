@@ -171,6 +171,7 @@ def main():
         elif const.args.list:
             if os.path.isdir(const.args.list):
                 files = [f for f in os.listdir(const.args.list) if re.match(r'.*_d\.txt', f)]
+                shuffle(files)
                 timeout = time.time() + int(os.getenv('MAX_DOWNLOAD_TIME_MIN', '300')) * 60
                 index = 0
                 while len(files) > 0:
