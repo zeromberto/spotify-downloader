@@ -44,6 +44,7 @@ ENTRYPOINT ["/entrypoint.sh"]
 
 # Copy config files
 COPY supervisor.conf /app/run/supervisord.conf
+COPY default.pa /etc/pulse/default.pa
 COPY client.conf /etc/pulse/client.conf
 COPY daemon.conf /etc/pulse/daemon.conf
 COPY mopidy.conf /var/lib/mopidy/.config/mopidy/mopidy.conf
