@@ -8,6 +8,7 @@ import sys
 import time
 import urllib.request
 from random import shuffle
+from shutil import copyfile
 
 import spotipy
 from slugify import slugify
@@ -21,6 +22,8 @@ from core import record
 from core import spotify_tools
 
 __version__ = '0.9.3'
+
+duration_debug = True if os.getenv('DURATION_DEBUG') else False
 
 
 def check_exists(music_file, raw_song, meta_tags, folder):
@@ -141,6 +144,12 @@ def download_single(raw_song, number=None, folder=None):
         play_time = player.play_and_record(meta_tags['uri'], file_name, songname)
         if not record.verify_length(file_name, meta_tags['duration'], play_time):
             log.error('Duration mismatch! Deleting: {}'.format(songname))
+            if duration_debug:
+                fail_path = os.path.join(folder_path, 'mismatch')
+                if not os.path.exists(fail_path):
+                    os.mkdir(fail_path)
+                _, file_only = os.path.split(file_name)
+                copyfile(file_name, os.path.join(fail_path, file_only))
             os.remove(file_name)
             return False
         if not const.args.no_metadata and meta_tags is not None:

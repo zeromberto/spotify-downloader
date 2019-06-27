@@ -27,7 +27,7 @@ def record(file_name, track_name, stop_recording_handler):
             raise RuntimeError('Playing did not start!')
         while not stop_recording_handler():
             time.sleep(0.05)
-        time.sleep(1)
+        time.sleep(5)
         record_process.terminate()
         log.debug('finished recording')
     except Exception as e:
@@ -74,6 +74,7 @@ def cut_recording(file_name, spotify_duration):
                                   stdout=subprocess.PIPE,
                                   stderr=subprocess.STDOUT).stdout.read()
         log.debug(output)
+    get_recorded_length(copy_name)
     os.remove(file_name)
     log.debug('Setting track length')
     ffmpeg_cut_length_cmd = ['ffmpeg',
