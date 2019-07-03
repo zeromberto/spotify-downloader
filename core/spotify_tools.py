@@ -167,6 +167,8 @@ def write_tracks(tracks, text_file):
                tracks['total'], text_file))
     track_urls = []
     with open(text_file, 'a') as file_out:
+        file_out.seek(0)
+        file_out.truncate()
         while True:
             for item in tracks['items']:
                 if 'track' in item:
