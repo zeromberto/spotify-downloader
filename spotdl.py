@@ -75,14 +75,14 @@ def download_list(text_file, folder=None):
             return False
 
         try:
-            download_single(raw_song, number=number, folder=folder)
+            positive_download = download_single(raw_song, number=number, folder=folder)
         # token expires after 1 hour
         except spotipy.client.SpotifyException:
             # refresh token when it expires
             log.debug('Token expired, generating new one and authorizing')
             new_token = spotify_tools.generate_token()
             spotify_tools.spotify = spotipy.Spotify(auth=new_token)
-            download_single(raw_song, number=number, folder=folder)
+            positive_download = download_single(raw_song, number=number, folder=folder)
         # detect network problems
         except (urllib.request.URLError, TypeError, IOError) as e:
             lines.append(raw_song)
@@ -96,7 +96,9 @@ def download_list(text_file, folder=None):
             # wait 0.5 sec to avoid infinite looping
             time.sleep(0.5)
             continue
-
+        if not positive_download:
+            with open(os.path.join(folder, '_dead_tracks'), 'a') as f:
+                f.write(raw_song + '\n')
         downloaded_songs.append(raw_song)
         log.debug('Removing downloaded song from text file')
         internals.trim_song(text_file)
@@ -105,13 +107,13 @@ def download_list(text_file, folder=None):
     return True
 
 
-def download_single(raw_song, number=None, folder=None):
+def download_single(raw_song, number=None, folder=None) -> bool:
     """ Logic behind downloading a song. """
     meta_tags = spotify_tools.generate_metadata(raw_song)
 
     if const.args.download_only_metadata and meta_tags is None:
         log.info('Found no metadata. Skipping the download')
-        return
+        return False
 
     # generate file name of the song to download
     songname = 'foo'
@@ -126,11 +128,6 @@ def download_single(raw_song, number=None, folder=None):
     else:
         log.warning('Could not find metadata')
         songname = internals.sanitize_title(songname)
-
-    if const.args.dry_run:
-        log.info(songname)
-        check_exists(songname, raw_song, meta_tags)
-        return
 
     if not check_exists(songname, raw_song, meta_tags, folder):
         # deal with file formats containing slashes to non-existent directories
@@ -155,6 +152,7 @@ def download_single(raw_song, number=None, folder=None):
         if not const.args.no_metadata and meta_tags is not None:
             metadata.embed(file_name, meta_tags)
         return True
+    return True
 
 
 def main():
@@ -167,7 +165,7 @@ def main():
     internals.filter_path(const.args.folder)
 
     const.log = const.logzero.setup_logger(formatter=const._formatter,
-                                      level=const.args.log_level)
+                                           level=const.args.log_level)
     global log
     log = const.log
     log.debug('Python version: {}'.format(sys.version))
