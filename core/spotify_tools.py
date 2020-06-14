@@ -138,8 +138,10 @@ def fetch_playlist(playlist):
 
 def write_playlist(playlist_url, text_file=None):
     playlist = fetch_playlist(playlist_url)
-    postfix = os.getenv('POSTFIX', '_d')
-    if playlist['name'].endswith(postfix):
+    to_download = os.getenv('PLAYLISTS', '')
+    log.debug(f'downloading playlists: {to_download}')
+    to_download = to_download.split(sep=',')
+    if playlist['name'] in to_download:
         tracks = playlist['tracks']
         if not text_file:
             text_file = u'{0}.txt'.format(slugify(playlist['name'], ok='-_()[]{}'))
