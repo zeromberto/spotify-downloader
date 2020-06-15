@@ -18,9 +18,10 @@ def generate_token():
     credentials = oauth2.SpotifyClientCredentials(
         client_id=os.getenv('SPOTDL_CLIENT_ID'),
         client_secret=os.getenv('SPOTDL_CLIENT_SECRET'),
-        )
+    )
     token = credentials.get_access_token()
     return token
+
 
 # token is mandatory when using Spotify's API
 # https://developer.spotify.com/news-stories/2017/01/27/removing-unauthenticated-calls-to-the-web-api/
@@ -65,8 +66,8 @@ def generate_metadata(raw_song):
 
     try:
         meta_tags['lyrics'] = lyricwikia.get_lyrics(
-                        meta_tags['artists'][0]['name'],
-                        meta_tags['name'])
+            meta_tags['artists'][0]['name'],
+            meta_tags['name'])
     except lyricwikia.LyricsNotFound:
         meta_tags['lyrics'] = None
 
@@ -78,7 +79,7 @@ def generate_metadata(raw_song):
     del meta_tags['available_markets']
     del meta_tags['album']['available_markets']
 
-    #log.debug(pprint.pformat(meta_tags))
+    # log.debug(pprint.pformat(meta_tags))
     return meta_tags
 
 
@@ -140,11 +141,12 @@ def write_playlist(playlist_url, text_file=None):
     playlist = fetch_playlist(playlist_url)
     to_download = os.getenv('PLAYLISTS', '')
     log.debug(f'downloading playlists: {to_download}')
-    to_download = to_download.split(sep=',')
-    if playlist['name'] in to_download:
+    to_download = slugify(to_download, ok=',-_()[]{}').split(sep=',')
+    playlist_name = slugify(playlist['name'], ok='-_()[]{}')
+    if playlist_name in to_download:
         tracks = playlist['tracks']
         if not text_file:
-            text_file = u'{0}.txt'.format(slugify(playlist['name'], ok='-_()[]{}'))
+            text_file = u'{0}.txt'.format(playlist_name)
         return write_tracks(tracks, text_file)
     return None
 
@@ -166,7 +168,7 @@ def write_album(album_url, text_file=None):
 
 def write_tracks(tracks, text_file):
     log.info(u'Writing {0} tracks to {1}'.format(
-               tracks['total'], text_file))
+        tracks['total'], text_file))
     track_urls = []
     with open(text_file, 'a') as file_out:
         file_out.seek(0)
