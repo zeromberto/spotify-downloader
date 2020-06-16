@@ -177,7 +177,7 @@ def main():
             download_single(raw_song=const.args.song)
         elif const.args.list:
             if os.path.isdir(const.args.list):
-                files = [f for f in os.listdir(const.args.list) if re.match(r'.*_d\.txt', f)]
+                files = [f for f in os.listdir(const.args.list) if re.match(r'.*\.txt', f)]
                 shuffle(files)
                 timeout = time.time() + int(os.getenv('MAX_DOWNLOAD_TIME_MIN', '300')) * 60
                 index = 0
@@ -186,7 +186,7 @@ def main():
                     if time.time() > timeout:
                         log.info('Total timeout! Stopping download of playlists.')
                         break
-                    folder = os.path.join(const.args.folder, list_file).rstrip('_d.txt')
+                    folder = os.path.join(const.args.folder, list_file).rstrip('.txt')
                     internals.filter_path(folder)
                     if download_list(os.path.join(const.args.list, list_file), folder):
                         files.pop(index)
