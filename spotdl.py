@@ -177,7 +177,7 @@ def main():
             download_single(raw_song=const.args.song)
         elif const.args.list:
             if os.path.isdir(const.args.list):
-                files = [f for f in os.listdir(const.args.list) if re.match(r'.*\.txt', f)]
+                files = [f for f in os.listdir(const.args.list) if re.match(r'.*\.txt', f) and not re.match(r'requirements\.txt', f)]
                 shuffle(files)
                 timeout = time.time() + int(os.getenv('MAX_DOWNLOAD_TIME_MIN', '300')) * 60
                 index = 0
